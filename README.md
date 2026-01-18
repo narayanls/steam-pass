@@ -1,4 +1,4 @@
-# steam-pass
+# Steam Pass
 
 Lightweight **GTK 4** account switcher for **Steam** built with **Python**.
 
