@@ -1,5 +1,6 @@
 # steam-pass
 Lightweight GTK 4 account switcher for Steam built with Python.
 <p align="left">
-<img width="441" height="508" alt="screenshot" src="https://github.com/user-attachments/assets/e4e8768f-d2aa-4d2a-b99c-2c84fbb9b8a9" />
+<img width="455" height="516" alt="Captura de tela de 2026-01-18 14-43-35" src="https://github.com/user-attachments/assets/3f9ba00d-315f-4ce2-8687-3ee222eb12d3" />
 </p>
+
