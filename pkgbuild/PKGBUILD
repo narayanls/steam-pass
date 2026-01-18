@@ -2,7 +2,7 @@
 
 pkgname=steam-pass
 _pkgname=steam-pass
-pkgver=r4.1041053
+pkgver=r6.cd07108
 pkgrel=1
 pkgdesc="Lightweight GTK 4 account switcher for Steam"
 arch=('any')
