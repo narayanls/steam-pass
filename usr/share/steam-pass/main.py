@@ -270,7 +270,7 @@ class SteamPassWindow(Gtk.ApplicationWindow):
 
 class SteamPassApp(Gtk.Application):
     def __init__(self):
-        super().__init__(application_id="com.steampass.app", flags=Gio.ApplicationFlags.FLAGS_NONE)
+        super().__init__(application_id="io.github.narayanls.steampass.app", flags=Gio.ApplicationFlags.FLAGS_NONE)
         self.manager = None
 
     def do_startup(self):

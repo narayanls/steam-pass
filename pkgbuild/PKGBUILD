@@ -1,8 +1,8 @@
 # Maintainer: Narayan Lima da Silva <narayan.song@gmail.com>
 
-pkgname=steam-pass-git
+pkgname=steam-pass
 _pkgname=steam-pass
-pkgver=r1.7f3a2b1
+pkgver=r4.1041053
 pkgrel=1
 pkgdesc="Lightweight GTK 4 account switcher for Steam"
 arch=('any')
