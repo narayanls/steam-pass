@@ -41,7 +41,7 @@ After installing:
 
 ## Requirements
 
-- Steam installed on your system.
+- Steam installed on your system and launched at least once.
 
 ## License
 
