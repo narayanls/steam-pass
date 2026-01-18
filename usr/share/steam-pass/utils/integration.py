@@ -5,7 +5,7 @@ from pathlib import Path
 # Configurações do Steam Pass
 APP_ID = 'io.github.narayanls.steampass.app'
 APP_NAME = 'Steam Pass'
-ICON_NAME = 'steam-pass' 
+ICON_NAME = 'io.github.narayanls.steampass.app' 
 
 def is_running_as_appimage():
     """Verifica se está rodando via AppImage."""

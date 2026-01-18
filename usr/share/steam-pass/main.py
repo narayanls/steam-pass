@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import sys
 import os
 import vdf
@@ -14,6 +13,8 @@ from utils.integration import is_running_as_appimage, is_installed, install_appi
 # Configuração do GTK4
 gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk, Gio, GLib
+
+APP_ID = 'io.github.narayanls.steampass.app'
 
 class SteamManager:
     """Gerencia a localização e modificação dos arquivos da Steam."""
@@ -205,8 +206,17 @@ class UserRow(Gtk.Box):
 class SteamPassWindow(Gtk.ApplicationWindow):
     def __init__(self, app, manager):
         super().__init__(application=app, title="Steam Pass")
+        self.set_icon_name(APP_ID) 
         self.manager = manager
         self.set_default_size(300, 400)
+        
+        # Tenta carregar o ícone manualmente para garantir
+        base_path = Path(__file__).parent.parent.parent
+        icon_path = base_path / "share" / "icons" / "hicolor" / "scalable" / "apps" / "io.github.narayanls.steampass.app.svg"
+        
+        # O Gtk4 não tem set_icon_from_file, então confiamos no set_icon_name
+        # Mas garantimos que o APP_ID está setado
+        self.set_icon_name(APP_ID)
         
         script_dir = Path(__file__).parent.resolve()
         self.icon_path = script_dir / "icons/hicolor/scalable/status/avatar-default-symbolic.svg"
@@ -280,7 +290,10 @@ class SteamPassWindow(Gtk.ApplicationWindow):
             )
             msg = "Deseja fechar a Steam e "
             msg += "trocar de usuário?" if account_name else "fazer login em nova conta?"
-            dialog.format_secondary_text(msg)
+            
+            # Correção aplicada aqui
+            dialog.props.secondary_text = msg
+            
             dialog.connect("response", self.on_dialog_response, account_name)
             dialog.present()
         else:
@@ -303,6 +316,9 @@ class SteamPassWindow(Gtk.ApplicationWindow):
 class SteamPassApp(Gtk.Application):
     def __init__(self):
         super().__init__(application_id="io.github.narayanls.steampass.app", flags=Gio.ApplicationFlags.FLAGS_NONE)
+        
+        GLib.set_prgname("io.github.narayanls.steampass.app")
+        
         self.manager = None
         self.win = None
 
@@ -332,9 +348,10 @@ class SteamPassApp(Gtk.Application):
                 buttons=Gtk.ButtonsType.YES_NO,
                 text="Integrar ao Sistema?"
             )
-            dialog.format_secondary_text(
-                "O Steam Pass está rodando como AppImage.\nDeseja adicionar um atalho ao menu de aplicativos?"
-            )
+            
+            # Correção aplicada aqui
+            dialog.props.secondary_text = "O Steam Pass está rodando como AppImage.\nDeseja adicionar um atalho ao menu de aplicativos?"
+            
             dialog.connect("response", self.on_integration_response)
             dialog.present()
 
