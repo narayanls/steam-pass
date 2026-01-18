@@ -1,7 +1,7 @@
 # Steam Pass
 
 Lightweight **GTK 4** account switcher for **Steam** built with **Python**.
----
+
 ## Metrics
 ![Downloads](https://img.shields.io/github/downloads/narayanls/steam-pass/total?style=flat-square)
 ![GitHub Release](https://img.shields.io/github/v/release/narayanls/steam-pass?include_releases&style=flat-square)
