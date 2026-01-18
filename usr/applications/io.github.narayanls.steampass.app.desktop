@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Steam Pass
+Comment=Lightweight GTK 4 account switcher for Steam
+GenericName=Steam Account Switcher
+Exec=steam-pass
+Icon=io.github.narayanls.steampass.app
+Type=Application
+Terminal=false
+StartupNotify=true
+Categories=Game;Utility;
+Keywords=Steam;Account;Login;Switcher;
+StartupWMClass=io.github.narayanls.steampass.app
