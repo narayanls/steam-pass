@@ -62,6 +62,13 @@ class SteamManager:
         dictionary[key] = {}
         return dictionary[key]
 
+    def _find_key_case_insensitive(self, dictionary, key):
+        """Retorna a chave real usada no dicionário."""
+        for k in dictionary.keys():
+            if k.lower() == key.lower():
+                return k
+        return None
+
     def get_users(self):
         if not self.config_path.exists():
             return []
@@ -86,6 +93,67 @@ class SteamManager:
         except Exception as e:
             print(f"Erro ao ler usuários: {e}")
             return []
+
+    def remove_user(self, account_name):
+        """Remove o usuário do loginusers.vdf e do registro/config."""
+        print(f"Removendo usuário: {account_name}")
+        
+        # 1. Remover de loginusers.vdf
+        if self.config_path.exists():
+            try:
+                with open(self.config_path, 'r', encoding='utf-8') as f:
+                    data = vdf.load(f)
+                
+                users = data.get('users', {})
+                # A chave é o SteamID, precisamos achar qual SteamID pertence a este AccountName
+                target_sid = None
+                for sid, info in users.items():
+                    if info.get('AccountName') == account_name:
+                        target_sid = sid
+                        break
+                
+                if target_sid:
+                    del users[target_sid]
+                    with open(self.config_path, 'w', encoding='utf-8') as f:
+                        vdf.dump(data, f, pretty=True)
+            except Exception as e:
+                print(f"Erro ao remover de loginusers.vdf: {e}")
+
+        # 2. Remover do registry/config
+        if self.registry_file and self.registry_file.exists():
+            try:
+                with open(self.registry_file, 'r', encoding='utf-8') as f:
+                    data = vdf.load(f)
+                
+                # Navegar até a chave 'Accounts'
+                root_key = 'Registry' if self.mode == 'registry' else 'InstallConfigStore'
+                
+                # Navegação manual cuidadosa
+                root = self._get_case_insensitive_dict(data, root_key)
+                if self.mode == 'registry':
+                    hkcu = self._get_case_insensitive_dict(root, 'HKCU')
+                    software = self._get_case_insensitive_dict(hkcu, 'Software')
+                else:
+                    # ConfigStore geralmente é InstallConfigStore -> Software
+                    software = self._get_case_insensitive_dict(root, 'Software')
+
+                valve = self._get_case_insensitive_dict(software, 'Valve')
+                steam = self._get_case_insensitive_dict(valve, 'Steam')
+                accounts = self._get_case_insensitive_dict(steam, 'Accounts')
+
+                # Procura a chave do usuário (case insensitive) para deletar
+                real_key = self._find_key_case_insensitive(accounts, account_name)
+                if real_key:
+                    del accounts[real_key]
+                    with open(self.registry_file, 'w', encoding='utf-8') as f:
+                        vdf.dump(data, f, pretty=True)
+                    print("Removido do registro com sucesso.")
+                else:
+                    print("Usuário não encontrado em 'Accounts'.")
+
+            except Exception as e:
+                print(f"Erro ao remover do registro: {e}")
+
 
     def set_active_user(self, account_name):
         if not self.registry_file or not self.registry_file.exists():
@@ -171,7 +239,7 @@ class SteamManager:
             print(f"Erro ao fechar Steam: {e}")
 
 class UserRow(Gtk.Box):
-    def __init__(self, user_data, icon_path):
+    def __init__(self, user_data, icon_path, delete_callback):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         
         self.user_data = user_data
@@ -180,6 +248,7 @@ class UserRow(Gtk.Box):
         self.set_margin_start(10)
         self.set_margin_end(10)
 
+        # 1. Ícone
         if icon_path and icon_path.exists():
             icon_img = Gtk.Image.new_from_file(str(icon_path))
         else:
@@ -188,8 +257,11 @@ class UserRow(Gtk.Box):
         icon_img.set_pixel_size(32)
         self.append(icon_img)
 
+        # 2. Texto
         text_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         text_box.set_valign(Gtk.Align.CENTER)
+        # Hexpand empurra o próximo elemento (botão X) para o final
+        text_box.set_hexpand(True) 
 
         lbl_persona = Gtk.Label(label=user_data['PersonaName'])
         lbl_persona.set_halign(Gtk.Align.START)
@@ -203,20 +275,24 @@ class UserRow(Gtk.Box):
         text_box.append(lbl_account)
         self.append(text_box)
 
+        # 3. Botão Remover (X Vermelho)
+        btn_delete = Gtk.Button.new_from_icon_name("window-close-symbolic")
+        btn_delete.add_css_class("destructive-action")
+        btn_delete.add_css_class("flat") 
+        btn_delete.set_valign(Gtk.Align.CENTER)
+        btn_delete.set_tooltip_text("Remover conta da lista")
+        
+        # Conecta o clique. Usamos lambda para passar o nome da conta
+        btn_delete.connect("clicked", delete_callback, user_data['AccountName'])
+        
+        self.append(btn_delete)
+
 class SteamPassWindow(Gtk.ApplicationWindow):
     def __init__(self, app, manager):
         super().__init__(application=app, title="Steam Pass")
         self.set_icon_name(APP_ID) 
         self.manager = manager
         self.set_default_size(300, 400)
-        
-        # Tenta carregar o ícone manualmente para garantir
-        base_path = Path(__file__).parent.parent.parent
-        icon_path = base_path / "share" / "icons" / "hicolor" / "scalable" / "apps" / "io.github.narayanls.steampass.app.svg"
-        
-        # O Gtk4 não tem set_icon_from_file, então confiamos no set_icon_name
-        # Mas garantimos que o APP_ID está setado
-        self.set_icon_name(APP_ID)
         
         script_dir = Path(__file__).parent.resolve()
         self.icon_path = script_dir / "icons/hicolor/scalable/status/avatar-default-symbolic.svg"
@@ -236,14 +312,17 @@ class SteamPassWindow(Gtk.ApplicationWindow):
         scrolled.set_child(self.listbox)
         main_box.append(scrolled)
 
-        action_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        # Botão + no rodapé
+        action_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        action_box.set_halign(Gtk.Align.CENTER)
         action_box.set_margin_top(10)
         action_box.set_margin_bottom(10)
-        action_box.set_margin_start(10)
-        action_box.set_margin_end(10)
         
-        btn_add = Gtk.Button(label="Adicionar Nova Conta")
+        # Ícone de +
+        btn_add = Gtk.Button.new_from_icon_name("list-add-symbolic")
         btn_add.add_css_class("suggested-action") 
+        btn_add.add_css_class("circular") # Deixa o botão redondo
+        btn_add.set_tooltip_text("Adicionar nova conta")
         btn_add.connect("clicked", self.on_add_account_clicked)
         
         action_box.append(btn_add)
@@ -252,6 +331,13 @@ class SteamPassWindow(Gtk.ApplicationWindow):
         self.load_users()
 
     def load_users(self):
+        # Limpa a lista atual (removendo todos os filhos)
+        while True:
+            row = self.listbox.get_first_child()
+            if not row:
+                break
+            self.listbox.remove(row)
+
         users = self.manager.get_users()
         if not users:
             lbl = Gtk.Label(label="Nenhum usuário encontrado.")
@@ -260,7 +346,8 @@ class SteamPassWindow(Gtk.ApplicationWindow):
             return
 
         for user in users:
-            row = UserRow(user, self.icon_path)
+            # Passamos o callback de delete
+            row = UserRow(user, self.icon_path, self.on_delete_clicked)
             list_row = Gtk.ListBoxRow()
             list_row.set_child(row)
             list_row.user_data = user 
@@ -279,6 +366,28 @@ class SteamPassWindow(Gtk.ApplicationWindow):
         print("Solicitado: Nova Conta")
         self.check_and_launch("") 
 
+    def on_delete_clicked(self, button, account_name):
+        """Callback chamado quando o X é clicado."""
+        dialog = Gtk.MessageDialog(
+            transient_for=self,
+            modal=True,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text=f"Remover {account_name}?"
+        )
+        dialog.props.secondary_text = "Isso removerá a conta da lista de login automático e das credenciais salvas."
+        
+        # Conecta a resposta
+        dialog.connect("response", self.on_delete_confirmed, account_name)
+        dialog.present()
+
+    def on_delete_confirmed(self, dialog, response_id, account_name):
+        dialog.destroy()
+        if response_id == Gtk.ResponseType.YES:
+            self.manager.remove_user(account_name)
+            # Recarrega a lista para sumir com o item
+            self.load_users()
+
     def check_and_launch(self, account_name):
         if self.manager.is_steam_running():
             dialog = Gtk.MessageDialog(
@@ -291,7 +400,6 @@ class SteamPassWindow(Gtk.ApplicationWindow):
             msg = "Deseja fechar a Steam e "
             msg += "trocar de usuário?" if account_name else "fazer login em nova conta?"
             
-            # Correção aplicada aqui
             dialog.props.secondary_text = msg
             
             dialog.connect("response", self.on_dialog_response, account_name)
@@ -321,9 +429,29 @@ class SteamPassApp(Gtk.Application):
         
         self.manager = None
         self.win = None
+        
+        self.connect('startup', self.on_startup)
 
-    def do_startup(self):
+    def on_startup(self, app):
         Gtk.Application.do_startup(self)
+        self.setup_icon_theme()
+
+    def setup_icon_theme(self):
+        try:
+            display = Gdk.Display.get_default()
+            if not display:
+                return
+            
+            icon_theme = Gtk.IconTheme.get_for_display(display)
+            current_dir = Path(__file__).parent.resolve()
+            bundled_icons_dir = current_dir.parent / "icons"
+            
+            if bundled_icons_dir.exists():
+                search_path = icon_theme.get_search_path()
+                search_path.insert(0, str(bundled_icons_dir))
+                icon_theme.set_search_path(search_path)
+        except Exception as e:
+            print(f"Erro ao configurar ícones: {e}")
 
     def do_activate(self):
         try:
@@ -331,7 +459,6 @@ class SteamPassApp(Gtk.Application):
             self.win = SteamPassWindow(self, self.manager)
             self.win.present()
             
-            # Checagem de integração (apenas após janela criada)
             self.check_integration()
             
         except FileNotFoundError as e:
@@ -339,7 +466,6 @@ class SteamPassApp(Gtk.Application):
             self.quit()
 
     def check_integration(self):
-        """Verifica e oferece integração se for AppImage."""
         if is_running_as_appimage() and not is_installed():
             dialog = Gtk.MessageDialog(
                 transient_for=self.win,
@@ -348,10 +474,7 @@ class SteamPassApp(Gtk.Application):
                 buttons=Gtk.ButtonsType.YES_NO,
                 text="Integrar ao Sistema?"
             )
-            
-            # Correção aplicada aqui
             dialog.props.secondary_text = "O Steam Pass está rodando como AppImage.\nDeseja adicionar um atalho ao menu de aplicativos?"
-            
             dialog.connect("response", self.on_integration_response)
             dialog.present()
 
