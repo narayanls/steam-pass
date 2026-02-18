@@ -425,7 +425,7 @@ class SteamPassApp(Gtk.Application):
     def __init__(self):
         super().__init__(application_id="io.github.narayanls.steampass.app", flags=Gio.ApplicationFlags.FLAGS_NONE)
         
-        GLib.set_prgname("Steam Pass")
+        GLib.set_prgname("io.github.narayanls.steampass.app")
         
         self.manager = None
         self.win = None
