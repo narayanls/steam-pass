@@ -10,9 +10,10 @@ from pathlib import Path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.integration import is_running_as_appimage, is_installed, install_appimage
 
-# Configuração do GTK4
+# Configuração do GTK4 + Libadwaita
 gi.require_version('Gtk', '4.0')
-from gi.repository import Gtk, Gio, GLib
+gi.require_version('Adw', '1')
+from gi.repository import Gtk, Gio, GLib, Gdk, Adw
 
 APP_ID = 'io.github.narayanls.steampass.app'
 
@@ -252,7 +253,7 @@ class UserRow(Gtk.Box):
         if icon_path and icon_path.exists():
             icon_img = Gtk.Image.new_from_file(str(icon_path))
         else:
-            icon_img = Gtk.Image.new_from_icon_name("avatar-default-symbolic")
+            icon_img = Gtk.Image.new_from_icon_name("sp-avatar-default-symbolic")
             
         icon_img.set_pixel_size(32)
         self.append(icon_img)
@@ -276,7 +277,7 @@ class UserRow(Gtk.Box):
         self.append(text_box)
 
         # 3. Botão Remover (X Vermelho)
-        btn_delete = Gtk.Button.new_from_icon_name("window-close-symbolic")
+        btn_delete = Gtk.Button.new_from_icon_name("sp-window-close-symbolic")
         btn_delete.add_css_class("destructive-action")
         btn_delete.add_css_class("flat") 
         btn_delete.set_valign(Gtk.Align.CENTER)
@@ -287,7 +288,7 @@ class UserRow(Gtk.Box):
         
         self.append(btn_delete)
 
-class SteamPassWindow(Gtk.ApplicationWindow):
+class SteamPassWindow(Adw.ApplicationWindow):
     def __init__(self, app, manager):
         super().__init__(application=app, title="Steam Pass")
         self.set_icon_name(APP_ID) 
@@ -297,11 +298,16 @@ class SteamPassWindow(Gtk.ApplicationWindow):
         script_dir = Path(__file__).parent.resolve()
         self.icon_path = script_dir / "icons/hicolor/scalable/status/avatar-default-symbolic.svg"
 
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        self.set_child(main_box)
+        # Outer box: header + content (Adw.ApplicationWindow pattern)
+        outer_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self.set_content(outer_box)
 
-        header = Gtk.HeaderBar()
-        self.set_titlebar(header)
+        header = Adw.HeaderBar()
+        outer_box.append(header)
+
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        main_box.set_vexpand(True)
+        outer_box.append(main_box)
 
         self.listbox = Gtk.ListBox()
         self.listbox.set_selection_mode(Gtk.SelectionMode.NONE)
@@ -319,7 +325,7 @@ class SteamPassWindow(Gtk.ApplicationWindow):
         action_box.set_margin_bottom(10)
         
         # Ícone de +
-        btn_add = Gtk.Button.new_from_icon_name("list-add-symbolic")
+        btn_add = Gtk.Button.new_from_icon_name("sp-list-add-symbolic")
         btn_add.add_css_class("suggested-action") 
         btn_add.add_css_class("circular") # Deixa o botão redondo
         btn_add.set_tooltip_text("Adicionar nova conta")
@@ -421,7 +427,7 @@ class SteamPassWindow(Gtk.ApplicationWindow):
         self.manager.launch_steam()
         self.close()
 
-class SteamPassApp(Gtk.Application):
+class SteamPassApp(Adw.Application):
     def __init__(self):
         super().__init__(application_id="io.github.narayanls.steampass.app", flags=Gio.ApplicationFlags.FLAGS_NONE)
         
@@ -433,7 +439,7 @@ class SteamPassApp(Gtk.Application):
         self.connect('startup', self.on_startup)
 
     def on_startup(self, app):
-        Gtk.Application.do_startup(self)
+        Adw.Application.do_startup(self)
         self.setup_icon_theme()
 
     def setup_icon_theme(self):
