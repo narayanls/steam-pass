@@ -253,7 +253,7 @@ class UserRow(Gtk.Box):
         if icon_path and icon_path.exists():
             icon_img = Gtk.Image.new_from_file(str(icon_path))
         else:
-            icon_img = Gtk.Image.new_from_icon_name("sp-avatar-default-symbolic")
+            icon_img = Gtk.Image.new_from_icon_name("avatar-default-symbolic")
             
         icon_img.set_pixel_size(32)
         self.append(icon_img)
@@ -277,7 +277,7 @@ class UserRow(Gtk.Box):
         self.append(text_box)
 
         # 3. Botão Remover (X Vermelho)
-        btn_delete = Gtk.Button.new_from_icon_name("sp-window-close-symbolic")
+        btn_delete = Gtk.Button.new_from_icon_name("window-close-symbolic")
         btn_delete.add_css_class("destructive-action")
         btn_delete.add_css_class("flat") 
         btn_delete.set_valign(Gtk.Align.CENTER)
@@ -325,7 +325,7 @@ class SteamPassWindow(Adw.ApplicationWindow):
         action_box.set_margin_bottom(10)
         
         # Ícone de +
-        btn_add = Gtk.Button.new_from_icon_name("sp-list-add-symbolic")
+        btn_add = Gtk.Button.new_from_icon_name("list-add-symbolic")
         btn_add.add_css_class("suggested-action") 
         btn_add.add_css_class("circular") # Deixa o botão redondo
         btn_add.set_tooltip_text("Adicionar nova conta")
