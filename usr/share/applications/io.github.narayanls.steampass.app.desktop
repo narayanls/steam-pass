@@ -9,4 +9,4 @@ Terminal=false
 StartupNotify=true
 Categories=Game;Utility;
 Keywords=Steam;Account;Login;Switcher;
-StartupWMClass=Steam Pass
+StartupWMClass=io.github.narayanls.steampass.app
