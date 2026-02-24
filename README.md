@@ -26,12 +26,12 @@ Lightweight **GTK 4** account switcher for **Steam** built with **Python**.
 
 ### Arch Linux and derivatives
 
-1. Download the package file: `steam-pass-r22.42f2bbf-1-any.pkg.tar.zst`.
+1. Download the package file: `steam-pass-r33.df48918-1-any.pkg.tar.zst`.
 2. Open a terminal in the folder where you downloaded the file.
 3. Install the package with:
 
 ```bash
-sudo pacman -U steam-pass-r22.42f2bbf-1-any.pkg.tar.zst
+sudo pacman -U steam-pass-r33.df48918-1-any.pkg.tar.zst
 ```
 
 ### Other Linux distributions (AppImage)
