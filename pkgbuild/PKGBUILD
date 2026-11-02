@@ -3,7 +3,7 @@
 pkgname=steam-pass
 _pkgname=steam-pass
 pkgver=r31.d245f35
-pkgrel=1
+pkgrel=1.2.0
 pkgdesc="Lightweight GTK 4 account switcher for Steam"
 arch=('any')
 url="https://github.com/narayanls/steam-pass"
