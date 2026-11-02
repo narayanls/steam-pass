@@ -9,6 +9,7 @@ from pathlib import Path
 # Importação da Integração
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.integration import is_running_as_appimage, is_installed, install_appimage
+from utils.i18n import _
 
 # Configuração do GTK4 + Libadwaita
 gi.require_version('Gtk', '4.0')
@@ -84,8 +85,8 @@ class SteamManager:
             for steam_id, info in users_dict.items():
                 users_list.append({
                     'steam_id': steam_id,
-                    'AccountName': info.get('AccountName', 'Desconhecido'),
-                    'PersonaName': info.get('PersonaName', 'Desconhecido'),
+                    'AccountName': info.get('AccountName', _('unknown')),
+                    'PersonaName': info.get('PersonaName', _('unknown')),
                     'Timestamp': info.get('Timestamp', '0')
                 })
             
@@ -281,7 +282,7 @@ class UserRow(Gtk.Box):
         btn_delete.add_css_class("destructive-action")
         btn_delete.add_css_class("flat") 
         btn_delete.set_valign(Gtk.Align.CENTER)
-        btn_delete.set_tooltip_text("Remover conta da lista")
+        btn_delete.set_tooltip_text(_("remove_tooltip"))
         
         # Conecta o clique. Usamos lambda para passar o nome da conta
         btn_delete.connect("clicked", delete_callback, user_data['AccountName'])
@@ -328,7 +329,7 @@ class SteamPassWindow(Adw.ApplicationWindow):
         btn_add = Gtk.Button.new_from_icon_name("list-add-symbolic")
         btn_add.add_css_class("suggested-action") 
         btn_add.add_css_class("circular") # Deixa o botão redondo
-        btn_add.set_tooltip_text("Adicionar nova conta")
+        btn_add.set_tooltip_text(_("add_tooltip"))
         btn_add.connect("clicked", self.on_add_account_clicked)
         
         action_box.append(btn_add)
@@ -346,7 +347,7 @@ class SteamPassWindow(Adw.ApplicationWindow):
 
         users = self.manager.get_users()
         if not users:
-            lbl = Gtk.Label(label="Nenhum usuário encontrado.")
+            lbl = Gtk.Label(label=_("no_users"))
             lbl.set_margin_top(20)
             self.listbox.append(lbl)
             return
@@ -379,9 +380,9 @@ class SteamPassWindow(Adw.ApplicationWindow):
             modal=True,
             message_type=Gtk.MessageType.QUESTION,
             buttons=Gtk.ButtonsType.YES_NO,
-            text=f"Remover {account_name}?"
+            text=_("remove_title", account=account_name)
         )
-        dialog.props.secondary_text = "Isso removerá a conta da lista de login automático e das credenciais salvas."
+        dialog.props.secondary_text = _("remove_body")
         
         # Conecta a resposta
         dialog.connect("response", self.on_delete_confirmed, account_name)
@@ -401,10 +402,9 @@ class SteamPassWindow(Adw.ApplicationWindow):
                 modal=True,
                 message_type=Gtk.MessageType.WARNING,
                 buttons=Gtk.ButtonsType.YES_NO,
-                text="A Steam está rodando"
+                text=_("steam_running_title")
             )
-            msg = "Deseja fechar a Steam e "
-            msg += "trocar de usuário?" if account_name else "fazer login em nova conta?"
+            msg = _("steam_running_switch") if account_name else _("steam_running_new")
             
             dialog.props.secondary_text = msg
             
@@ -478,9 +478,9 @@ class SteamPassApp(Adw.Application):
                 modal=True,
                 message_type=Gtk.MessageType.QUESTION,
                 buttons=Gtk.ButtonsType.YES_NO,
-                text="Integrar ao Sistema?"
+                text=_("integrate_title")
             )
-            dialog.props.secondary_text = "O Steam Pass está rodando como AppImage.\nDeseja adicionar um atalho ao menu de aplicativos?"
+            dialog.props.secondary_text = _("integrate_body")
             dialog.connect("response", self.on_integration_response)
             dialog.present()
 

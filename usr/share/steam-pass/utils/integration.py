@@ -2,6 +2,8 @@ import os
 import shutil
 from pathlib import Path
 
+from .i18n import _
+
 # Configurações do Steam Pass
 APP_ID = 'io.github.narayanls.steampass.app'
 APP_NAME = 'Steam Pass'
@@ -50,7 +52,7 @@ def install_appimage():
         desktop_content = f"""[Desktop Entry]
 Type=Application
 Name={APP_NAME}
-Comment=Gerenciador de contas Steam
+Comment={_('desktop_comment')}
 Exec="{appimage_path}"
 Icon={APP_ID}
 Categories=Game;Utility;
